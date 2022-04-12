@@ -10,7 +10,7 @@ def process(img0):
     img = img.astype(np.float64)
     threshold = 30 #150 #250
     _, gray, _ = retinexBinarization(img, sz = 15, threshold=threshold) 
-    gray = cv2.medianBlur(gray,5)
+    gray = cv2.medianBlur(gray,3) #5 #7
     _, binary = cv2.threshold(gray,threshold,255,cv2.THRESH_BINARY)
     #cv2.imwrite('gray.png',gray)
     #cv2.imwrite('binary.png',binary)
@@ -26,29 +26,38 @@ def process(img0):
     found = []
     for i in range(len(contours)):
         contour = contours[i]
-        if len(contour) > 250: #depth[i] == 2 or depth[i] == 4:
-            candidates = split(contour,img.shape)
-            for j in range(len(candidates)):
-                area = cv2.contourArea(candidates[j])
-                if area > 30000: # area
-                    #rect = cv2.boundingRect(candidates[j])
-                    #_,_,w,h = rect
-                    #if 3*w > 2*h and 3*h > 2*w: # rough shape
-                    perimeter = cv2.arcLength(candidates[j], closed=True)
-                    circularity = (perimeter**2) / (4*np.pi*area)
-                    curvature = getCurvature(candidates[j],6)
-                    curvaturity = np.std(curvature)
-                    if circularity < 1.9: #1.35 for circles
-                        border = False
-                        for point in candidates[j]:
-                            x, y = point[0]
-                            if x == 0 or y == 0 or x == img.shape[1]-1 or y == img.shape[0]-1:
-                                border = True
-                                break
-                        if not border:
-                            if curvaturity < 0.2:
-                                print(i,j,"circularity =",circularity,"curvaturity =",curvaturity)
-                                found.append(candidates[j])
+        if len(contour) > 2*250: #depth[i] == 2 or depth[i] == 4:
+            curvature = getCurvature(contour,6)
+            curvaturity = np.std(curvature)
+            if curvaturity < 1.0:
+                area = cv2.contourArea(contour)
+                perimeter = cv2.arcLength(contour, closed=True)            
+                circularity = (perimeter**2) / (4*np.pi*area)
+                if circularity < 1.75: # speeding up
+                    candidates = [contour]
+                else:
+                    candidates = split(contour,img.shape) # this is slow
+                for j in range(len(candidates)):
+                    area = cv2.contourArea(candidates[j])
+                    if area > 30000: # area
+                        #rect = cv2.boundingRect(candidates[j])
+                        #_,_,w,h = rect
+                        #if 3*w > 2*h and 3*h > 2*w: # rough shape
+                        perimeter = cv2.arcLength(candidates[j], closed=True)            
+                        circularity = (perimeter**2) / (4*np.pi*area)
+                        curvature = getCurvature(candidates[j],6)
+                        curvaturity = np.std(curvature)
+                        if circularity < 1.9: #1.35 for circles
+                            border = False
+                            for point in candidates[j]:
+                                x, y = point[0]
+                                if x == 0 or y == 0 or x == img.shape[1]-1 or y == img.shape[0]-1:
+                                    border = True
+                                    break
+                            if not border:
+                                if curvaturity < 0.75: # (median 3)  0.3 (median 5) #0.2 (median 7):
+                                    print(i,j,"circularity =",circularity,"curvaturity =",curvaturity)
+                                    found.append(candidates[j])
     
     sub = np.copy(img0)
     for subcontour in found:
@@ -69,10 +78,14 @@ def process(img0):
     cells = []
     if len(contains) > 0:
         c0 = np.argmax(contains)
-        c1 = np.argmin(contains)
-        cell = [found[c0],found[c1]]
-        if c1 == c0 or cv2.contourArea(cell[0]) < 1.1 * cv2.contourArea(cell[1]):
-            cell[1] = None
+        c1 = -1
+        for c in range(len(found)):
+            point = found[c][0][0].astype(np.float32)
+            if cv2.pointPolygonTest(found[c0], point, False) > 0:
+                if c != c0 and cv2.contourArea(found[c0]) > 1.1 * cv2.contourArea(found[c]):
+                    if c1 == -1 or contains[c] < contains[c1]:
+                        c1 = c
+        cell = [found[c0],found[c1] if c1 != -1 else None]
         cells.append(cell)
         
     disp = np.copy(img0)

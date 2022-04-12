@@ -77,7 +77,10 @@ def split(contour, shape, minArc = 250, maxEndsDistance = 120, curvatureStep = 6
                         if not border:
                             #print(i,j,"circularity =",circularity,"curvaturity =",curvaturity)
                             found.append(candidates[j])
-
+    
+    if len(found) == 0:
+        found.append(contour)
+    
     if details:
         return found, subcontours, curvature
     else:
@@ -106,7 +109,7 @@ if __name__ == "__main__":
     contour = contours[0]
     contour = np.array(contour,np.int32)
 
-    rows, cols = np.max(contour,axis=0)[0]
+    cols, rows = np.max(contour,axis=0)[0]
     disp = np.zeros((rows,cols,3),np.uint8)
     
     parts, subcontours, curvature = split(contour,disp.shape,details=True)
