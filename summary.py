@@ -11,11 +11,13 @@ for folder in os.listdir(imagesFolder):
 
 for subfolder in subfolders:
     images = []
+    fnames = []
     print('found',subfolder)
     for fname in os.listdir(subfolder):
         path = os.path.join(subfolder, fname)
         if fname.endswith('jpg') or fname.endswith('tiff'):
             print('-',fname)
+            fnames.append(fname)
             image = cv2.imread(path)
             images.append(image)  
     
@@ -36,6 +38,7 @@ for subfolder in subfolders:
             if k == len(images):
                 break
             glob[i*rows:(i+1)*rows,j*cols:(j+1)*cols] = images[k]
+            cv2.putText(glob,fnames[k],(j*cols+16,i*rows+32),0,1,(255,255,255),2)
             k += 1
         if k == len(images):
             break
