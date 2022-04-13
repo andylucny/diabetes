@@ -4,6 +4,7 @@ import numpy as np
 from retinex import retinexBinarization
 from curvature import getCurvature
 from splitter import split
+from annotator import save
 
 imagesFolder = 'inputs'
 subfolders = []
@@ -24,6 +25,7 @@ for subfolder in subfolders:
 sigma = 15#7
 threshold = 30
 median = 2#3#4 # *2 -1
+curvaturityThreshold = 100
 
 def updateSigma( *args ):
     global sigma
@@ -37,10 +39,15 @@ def updateMedian( *args ):
     global median
     median = args[0]
 
+def updateCurvaturityThreshold( *args ):
+    global curvaturityThreshold
+    curvaturityThreshold = args[0]
+
 cv2.namedWindow("Retinex")
 cv2.createTrackbar("sigma", "Retinex", sigma, 50, updateSigma)
 cv2.createTrackbar("threshold", "Retinex", threshold, 255, updateThreshold)
 cv2.createTrackbar("median", "Retinex", median, 10, updateMedian)
+cv2.createTrackbar("100 x curvaturity", "Retinex", curvaturityThreshold, 500, updateCurvaturityThreshold)
             
 def process(img0,splitting=False):
     img = cv2.cvtColor(img0,cv2.COLOR_BGR2GRAY)
@@ -58,19 +65,15 @@ def process(img0,splitting=False):
             if splitting:
                 subcontours = split(contour,img.shape)
                 for subcontour in subcontours:
-                    candidates.append(subcontour)
+                    curvaturity = np.std(getCurvature(subcontour,6))
+                    if curvaturity * 100 <= curvaturityThreshold:
+                        candidates.append(subcontour)
             else:
-                candidates.append(contour)
+                curvaturity = np.std(getCurvature(contour,6))
+                if curvaturity * 100 <= curvaturityThreshold:
+                    candidates.append(contour)
                 
     return gray, candidates
-
-def save(path,candidates,categories):
-    with open(path+'.txt','w') as f:
-        for candidate, category in zip(candidates,categories):
-            s = str(category) + ' ' + str(len(candidate))
-            for point in candidate:
-                s += '  ' + str(point[0][0]) + ' ' + str(point[0][1])
-            f.write(s+'\n')
 
 draw = True
 origin = True
@@ -100,7 +103,7 @@ while True:
                 color = (0,255,0)
                 thickness = 1
             for q in range(len(subcontour)-1):
-                cv2.line(disp,subcontour[q][0],subcontour[q+1][0],color,thickness)
+                cv2.line(disp,tuple(subcontour[q][0]),tuple(subcontour[q+1][0]),color,thickness)
         
         txt = str(sigma)+' '+str(threshold)+' '+str(median)
         if len(contours) > 0:
@@ -116,7 +119,7 @@ while True:
             color = (0,0,255)
             thickness = 2
             for q in range(len(subcontour)-1):
-                cv2.line(disp,subcontour[q][0],subcontour[q+1][0],color,thickness)
+                cv2.line(disp,tuple(subcontour[q][0]),tuple(subcontour[q+1][0]),color,thickness)
         
     cv2.imshow('Retinex',cv2.resize(disp,(disp.shape[1]//2,disp.shape[0]//2)))
     key = cv2.waitKeyEx(10)
@@ -184,9 +187,13 @@ while True:
         if len(contours) > 0:
             parts = split(contours[j],image.shape)
             print('parts',len(parts))
-    elif key == ord('s'):
+    elif key == ord('S'):
         if len(contours) > 0:
             save('contour',[contours[j]],[0])
+    elif key == ord('s'):
+        if len(contours) > 0:
+            save('annotation'+paths[i][5:-4]+'.txt',[contours[j]],[5],merge=True)
+            print('contour saved into','annotation'+paths[i][5:-4]+'.txt')
     elif key == ord('c'):
         splitting = not splitting
     elif key != -1:
