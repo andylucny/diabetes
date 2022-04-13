@@ -23,7 +23,7 @@ for subfolder in subfolders:
             
 sigma = 15#7
 threshold = 30
-median = 3#4 # *2 -1
+median = 2#3#4 # *2 -1
 
 def updateSigma( *args ):
     global sigma
@@ -46,7 +46,8 @@ def process(img0,splitting=False):
     img = cv2.cvtColor(img0,cv2.COLOR_BGR2GRAY)
     img = img.astype(np.float64)
     _, gray, _ = retinexBinarization(img, sz = sigma, threshold = threshold) 
-    gray = cv2.medianBlur(gray,2*median-1)
+    if median > 1:
+        gray = cv2.medianBlur(gray,2*median-1)
     _, binary = cv2.threshold(gray,threshold,255,cv2.THRESH_BINARY)
 
     contours, hierarchy = cv2.findContours(~binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)

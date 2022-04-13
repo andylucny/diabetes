@@ -21,7 +21,7 @@ def getCurvature(vecContourPoints, step=1):
         f2ndDerivative = (pplus - 2*pos + pminus) / (step**2)
 
         divisor = f1stDerivative[0]**2 + f1stDerivative[1]**2
-        curvature2D =  abs(f2ndDerivative[1]*f1stDerivative[0] - f2ndDerivative[0]*f1stDerivative[1]) / (divisor **1.5) if divisor > 10e-8 else np.inf
+        curvature2D =  abs(f2ndDerivative[1]*f1stDerivative[0] - f2ndDerivative[0]*f1stDerivative[1]) / (divisor **1.5) if divisor > 10e-8 else 1e20 #inf
         vecCurvature[i] = curvature2D
 
     return vecCurvature
