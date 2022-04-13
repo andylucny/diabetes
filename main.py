@@ -61,10 +61,10 @@ def process(img0):
     
     sub = np.copy(img0)
     for subcontour in found:
-        #color = (np.int(np.random.uniform(80,255)),np.int(np.random.uniform(80,255)),np.int(np.random.uniform(80,255)))
+        #color = (np.int32(np.random.uniform(80,255)),np.int32(np.random.uniform(80,255)),np.int32(np.random.uniform(80,255)))
         color = (0,0,255)
         for q in range(len(subcontour)-1):
-            cv2.line(sub,subcontour[q][0].astype(np.int),subcontour[q+1][0].astype(np.int),color,1)
+            cv2.line(sub,subcontour[q][0].astype(np.int32),subcontour[q+1][0].astype(np.int32),color,1)
 
     contains = np.zeros(len(found),np.int32)
     for i in range(len(found)):
