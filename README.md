@@ -8,9 +8,9 @@ We overcome adjacent cells with connecting curves of similar curvature by the Wa
 
  input image (single cell)               | output image
 :-------------------------:|:-------------------------:
-![input-single](images/input-single.jpg)  |![output-single](output-single.jpg)
+![input-single](images/input-single.jpg)  |![output-single](images/output-single.jpg)
 
  input image (multiple cells)              | output image
 :-------------------------:|:-------------------------:
-![input-multiple](images/input-multiple.jpg)  |![output-multiple](output-multiple.jpg)
+![input-multiple](images/input-multiple.jpg)  |![output-multiple](images/output-multiple.jpg)
 
